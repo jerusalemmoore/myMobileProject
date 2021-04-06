@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">749447469665-n4eqifne426np1js9q8517vs3nquuunk.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">749447469665</string>
+    <string name="google_api_key" translatable="false">AIzaSyCd7PF2Y-81LIW6sn0uXjh3gI2HCWvjXLA</string>
+    <string name="google_app_id" translatable="false">1:749447469665:android:df0aeb7d916412564fa820</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCd7PF2Y-81LIW6sn0uXjh3gI2HCWvjXLA</string>
+    <string name="google_storage_bucket" translatable="false">utility-chimera-286223.appspot.com</string>
+    <string name="project_id" translatable="false">utility-chimera-286223</string>
+</resources>

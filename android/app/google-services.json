@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "749447469665",
+    "project_id": "utility-chimera-286223",
+    "storage_bucket": "utility-chimera-286223.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749447469665:android:df0aeb7d916412564fa820",
+        "android_client_info": {
+          "package_name": "com.example.my_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "749447469665-n4eqifne426np1js9q8517vs3nquuunk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCd7PF2Y-81LIW6sn0uXjh3gI2HCWvjXLA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "749447469665-n4eqifne426np1js9q8517vs3nquuunk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
