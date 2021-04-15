@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'userHome.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'myforms.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'signup.dart';
 
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
       builder: EasyLoading.init(),
       routes: <String, WidgetBuilder>{
         '/signup': (BuildContext context) => SignupPage(),
+        '/login' : (BuildContext context) => MyHomePage(),
        // '/userHome' : (BuildContext context) => UserHomePage(),
 
       },
@@ -121,15 +123,15 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/signup');
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () {
+        //     Navigator.pushNamed(context, '/signup');
+        //
+        //   },
+        //   tooltip: 'Signup Page',
+        //   child: Icon(Icons.add),
+        );// This trailing comma makes auto-formatting nicer for build methods.
 
-          },
-          tooltip: 'Signup Page',
-          child: Icon(Icons.add),
-        ), // This trailing comma makes auto-formatting nicer for build methods.
-      );
     }
 
 }

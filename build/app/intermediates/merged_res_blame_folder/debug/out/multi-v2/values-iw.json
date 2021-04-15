@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "/home/jerusalem/AndroidStudioProjects/my_project/build/app/intermediates/incremental/mergeDebugResources/merged.dir/values-iw/values-iw.xml",
+            "outputFile": "/home/jerusalem/AndroidStudioProjects/myMobileProject/build/app/intermediates/incremental/mergeDebugResources/merged.dir/values-iw/values-iw.xml",
             "map": [
                 {
                     "source": "/home/jerusalem/.gradle/caches/transforms-2/files-2.1/9ceed95833256bf8e8f205dfd77a6d00/jetified-play-services-base-17.1.0/res/values-iw/values.xml",

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'userHome.dart';
 
 /*
   This form is used for creating users
@@ -29,6 +30,7 @@ class SignUpFormState extends State<SignUpForm> {
   final _passwordcontroller = TextEditingController();
   bool _initialized = false;
   bool _error = false;
+  String errorMsg = "errorMsg";
 
   void initializeFlutterFire() async {
     try {
@@ -49,15 +51,22 @@ class SignUpFormState extends State<SignUpForm> {
     super.initState();
     setState(() {});
   }
-
+  String getError(String errorMsg){
+    return errorMsg;
+  }
   void register(final controller1, final controller2) async {
     try {
       FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: controller1, password: controller2);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
+
         print('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
+        setState((){
+          errorMsg = "this is an error";
+        });
+
         print('The account already exists for that email.');
       }
     } catch (e) {
@@ -75,6 +84,7 @@ class SignUpFormState extends State<SignUpForm> {
       key: _formKey,
       child: Column(
         children: <Widget>[
+
           TextFormField(
               decoration: const InputDecoration(
                 icon: Icon(Icons.person),
@@ -87,6 +97,7 @@ class SignUpFormState extends State<SignUpForm> {
                 labelText: 'Password *',
               ),
               controller: _passwordcontroller),
+          
           ElevatedButton(
             onPressed: () {
               register(_emailcontroller.text, _passwordcontroller.text);
@@ -97,6 +108,7 @@ class SignUpFormState extends State<SignUpForm> {
 
           // Add TextFormFields and ElevatedButton here.
         ],
+
       ),
     );
   }
@@ -145,8 +157,10 @@ class SignInFormState extends State<SignInForm> {
 
   void signIn(final controller1, final controller2) async {
     try {
-      FirebaseAuth.instance.createUserWithEmailAndPassword(
+      FirebaseAuth.instance.signInWithEmailAndPassword(
           email: controller1, password: controller2);
+      Navigator.push(context, MaterialPageRoute(builder:(context) => userHome()));
+
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         print('The password provided is too weak.');
@@ -156,7 +170,7 @@ class SignInFormState extends State<SignInForm> {
     } catch (e) {
       print(e);
     }
-    Navigator.pop(context);
+
   }
 
   @override
@@ -210,7 +224,16 @@ class SignInFormState extends State<SignInForm> {
           ElevatedButton(
             onPressed: () {
               signIn(_emailcontroller.text, _passwordcontroller.text);
-
+              FirebaseAuth.instance
+                  .authStateChanges()
+                  .listen((User user) {
+                if (user == null) {
+                  print('User is  signed out!');
+                } else {
+                  print('User is signed in!');
+                  Navigator.push(context, MaterialPageRoute(builder:(context) => userHome()));
+                }
+              });
               // Validate returns true if the form is valid, or false otherwise.
             },
             child: Text('Submit'),
