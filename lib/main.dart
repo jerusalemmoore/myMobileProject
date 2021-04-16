@@ -31,12 +31,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
 
-      home: MyHomePage(),
+      //home: MyHomePage(),
       builder: EasyLoading.init(),
-      routes: <String, WidgetBuilder>{
-        '/signup': (BuildContext context) => SignupPage(),
-        '/login' : (BuildContext context) => MyHomePage(),
-       // '/userHome' : (BuildContext context) => UserHomePage(),
+      initialRoute:'/',
+      routes: {
+        '/signup': (context) => SignupPage(),
+        '/' : (context) => MyHomePage(),
+        '/userHome' : (context) => userHome(),
 
       },
     );

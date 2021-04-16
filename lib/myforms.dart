@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'userHome.dart';
 
 /*
@@ -31,6 +32,7 @@ class SignUpFormState extends State<SignUpForm> {
   bool _initialized = false;
   bool _error = false;
   String errorMsg = "errorMsg";
+  bool successfulReg = false;
 
   void initializeFlutterFire() async {
     try {
@@ -58,20 +60,24 @@ class SignUpFormState extends State<SignUpForm> {
     try {
       FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: controller1, password: controller2);
+      CollectionReference users = FirebaseFirestore.instance.collection('users');
+      users.add({
+        'account' : controller1
+      });
+      successfulReg = true;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
 
         print('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
-        setState((){
-          errorMsg = "this is an error";
-        });
 
         print('The account already exists for that email.');
       }
-    } catch (e) {
+    }  catch (e) {
       print(e);
+
     }
+
   }
 
   /*
@@ -101,6 +107,9 @@ class SignUpFormState extends State<SignUpForm> {
           ElevatedButton(
             onPressed: () {
               register(_emailcontroller.text, _passwordcontroller.text);
+              if(successfulReg){
+                Navigator.pushReplacementNamed(context, "/");
+              }
               // Validate returns true if the form is valid, or false otherwise.
             },
             child: Text('Submit'),
@@ -157,18 +166,26 @@ class SignInFormState extends State<SignInForm> {
 
   void signIn(final controller1, final controller2) async {
     try {
-      FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: controller1, password: controller2);
-      Navigator.push(context, MaterialPageRoute(builder:(context) => userHome()));
-
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: controller1,
+          password: controller2
+      );
+      FirebaseAuth.instance
+          .authStateChanges()
+          .listen((User user) {
+        if (user == null) {
+          print('User is  signed out!');
+        } else {
+          print('User is signed in!');
+          Navigator.pushNamed(context, '/userHome');
+        }
+      });
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
-      } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
       }
-    } catch (e) {
-      print(e);
     }
 
   }
@@ -224,16 +241,7 @@ class SignInFormState extends State<SignInForm> {
           ElevatedButton(
             onPressed: () {
               signIn(_emailcontroller.text, _passwordcontroller.text);
-              FirebaseAuth.instance
-                  .authStateChanges()
-                  .listen((User user) {
-                if (user == null) {
-                  print('User is  signed out!');
-                } else {
-                  print('User is signed in!');
-                  Navigator.push(context, MaterialPageRoute(builder:(context) => userHome()));
-                }
-              });
+
               // Validate returns true if the form is valid, or false otherwise.
             },
             child: Text('Submit'),

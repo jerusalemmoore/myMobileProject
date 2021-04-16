@@ -134,6 +134,7 @@
 -keep class com.google.firebase.auth.internal.RecaptchaActivity { <init>(); }
 -keep class com.google.firebase.components.ComponentDiscoveryService { <init>(); }
 -keep class com.google.firebase.provider.FirebaseInitProvider { <init>(); }
+-keep class io.flutter.plugins.imagepicker.ImagePickerFileProvider { <init>(); }
 
 # End of content from /home/jerusalem/AndroidStudioProjects/myMobileProject/build/app/intermediates/aapt_proguard_file/release/aapt_rules.txt
 # The proguard configuration file for the following section is /home/jerusalem/.gradle/caches/transforms-2/files-2.1/b9a48ae9aec0205c2b5ec98fb2715923/jetified-firebase-auth-20.0.3/proguard.txt
@@ -182,6 +183,9 @@
 -dontwarn com.google.j2objc.annotations.**
 
 # End of content from /home/jerusalem/.gradle/caches/transforms-2/files-2.1/d25b6938827cd9f2b31098e9aeb170ba/jetified-firebase-firestore-22.1.2/proguard.txt
+# The proguard configuration file for the following section is /home/jerusalem/.gradle/caches/transforms-2/files-2.1/4a126f3f8a6a4a30d50c11b2b416a772/jetified-firebase-storage-19.2.2/proguard.txt
+
+# End of content from /home/jerusalem/.gradle/caches/transforms-2/files-2.1/4a126f3f8a6a4a30d50c11b2b416a772/jetified-firebase-storage-19.2.2/proguard.txt
 # The proguard configuration file for the following section is /home/jerusalem/.gradle/caches/transforms-2/files-2.1/c6b5ef8297469d27b23b91055a9ca5f4/jetified-play-services-measurement-api-18.0.2/proguard.txt
 # Can be removed once we pull in a dependency on firebase-common that includes
 # https://github.com/firebase/firebase-android-sdk/pull/1472/commits/856f1ca1151cdd88679bbc778892f23dfa34fc06#diff-a2ed34b5a38b4c6c686b09e54865eb48
@@ -418,6 +422,15 @@
 }
 
 # End of content from /home/jerusalem/.gradle/caches/transforms-2/files-2.1/b03c4b5d8691ea8a2345b10b551b5141/rules/lib/META-INF/proguard/androidx-annotations.pro
+# The proguard configuration file for the following section is /home/jerusalem/.gradle/caches/transforms-2/files-2.1/95a6fc454bbe13677ad6068a30f92007/jetified-grpc-android-1.28.0/proguard.txt
+-keepclassmembers class io.grpc.okhttp.OkHttpChannelBuilder {
+  io.grpc.okhttp.OkHttpChannelBuilder forTarget(java.lang.String);
+  io.grpc.okhttp.OkHttpChannelBuilder scheduledExecutorService(java.util.concurrent.ScheduledExecutorService);
+  io.grpc.okhttp.OkHttpChannelBuilder sslSocketFactory(javax.net.ssl.SSLSocketFactory);
+  io.grpc.okhttp.OkHttpChannelBuilder transportExecutor(java.util.concurrent.Executor);
+}
+
+# End of content from /home/jerusalem/.gradle/caches/transforms-2/files-2.1/95a6fc454bbe13677ad6068a30f92007/jetified-grpc-android-1.28.0/proguard.txt
 # The proguard configuration file for the following section is /home/jerusalem/.gradle/caches/transforms-2/files-2.1/d51babbdaecde9609e498a511edea38c/jetified-protolite-well-known-types-17.1.1/proguard.txt
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
@@ -448,15 +461,6 @@
 }
 
 # End of content from /home/jerusalem/.gradle/caches/transforms-2/files-2.1/d51babbdaecde9609e498a511edea38c/jetified-protolite-well-known-types-17.1.1/proguard.txt
-# The proguard configuration file for the following section is /home/jerusalem/.gradle/caches/transforms-2/files-2.1/95a6fc454bbe13677ad6068a30f92007/jetified-grpc-android-1.28.0/proguard.txt
--keepclassmembers class io.grpc.okhttp.OkHttpChannelBuilder {
-  io.grpc.okhttp.OkHttpChannelBuilder forTarget(java.lang.String);
-  io.grpc.okhttp.OkHttpChannelBuilder scheduledExecutorService(java.util.concurrent.ScheduledExecutorService);
-  io.grpc.okhttp.OkHttpChannelBuilder sslSocketFactory(javax.net.ssl.SSLSocketFactory);
-  io.grpc.okhttp.OkHttpChannelBuilder transportExecutor(java.util.concurrent.Executor);
-}
-
-# End of content from /home/jerusalem/.gradle/caches/transforms-2/files-2.1/95a6fc454bbe13677ad6068a30f92007/jetified-grpc-android-1.28.0/proguard.txt
 # The proguard configuration file for the following section is <unknown>
 -ignorewarnings
 # End of content from <unknown>
