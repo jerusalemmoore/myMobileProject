@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'myforms.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';// as firebase_storage;
 import 'package:flutter/services.dart';
 import 'main.dart';
 import 'signup.dart';
@@ -20,29 +22,70 @@ class userHome extends StatefulWidget {
 
 class userHomeState extends State<userHome> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  firebase_storage.FirebaseStorage storage =
-      firebase_storage.FirebaseStorage.instance;
+ FirebaseStorage storage =
+    FirebaseStorage.instance;
   String userEmail;
   String username;
-  File _image;
   final picker = ImagePicker();
+  final aboutController = TextEditingController();
+  String aboutText;
+  File _image;
+  int num = 0;
+
+
+
   Future getImage() async {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
 
+    CollectionReference userPhotos = FirebaseFirestore.instance.collection('users').doc(userEmail).collection('photos');
     setState(() {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
+        print('$_image');
+        String fileName = basename(_image.path);
+        print('$fileName');
+        userPhotos.add({
+          'content' : "content",
+          'description': "photo description",
+          'location' : 'photo location'
+        });
+
       } else {
         print('No image selected.');
       }
     });
+    await uploadImageToFirebase();
+  }
+  Future <void> uploadImageToFirebase() async{
+    String filename = basename(_image.path);
+    Reference ref = storage.ref().child(userEmail).child(filename);
+    UploadTask uploadTask = ref.putFile(_image);
+    uploadTask.then((res){
+      res.ref.getDownloadURL();
+    });
+
   }
 
   void signOut() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pop(context);
+    //Navigator.pop(context);
   }
-
+  // Future<void> uploadExample() async {
+  //   Directory appDocDir = await getApplicationDocumentsDirectory();
+  //   String filePath = '${appDocDir.absolute}/file-to-upload.png';
+  //   await uploadFile("_image");
+  // }
+  // Future<void> uploadFile(String filePath) async {
+  //   File file = File(filePath);
+  //
+  //   try {
+  //     await firebase_storage.FirebaseStorage.instance
+  //         .ref('uploads/file-to-upload.png')
+  //         .putFile(file);
+  //   } on FirebaseException catch (e) {
+  //     // e.g, e.code == 'canceled'
+  //   }
+  // }
   bool isSignedIn() {
     FirebaseAuth.instance.authStateChanges().listen((User user) {
       if (user == null) {
@@ -54,16 +97,31 @@ class userHomeState extends State<userHome> {
   }
 
   Future<void> userName() async {
+
     FirebaseAuth.instance.authStateChanges().listen((User user) {
       setState(() {
         userEmail = user.email;
         username = userEmail.split('@')[0];
+      FirebaseFirestore.instance.collection('users').doc(userEmail)
+            .get()
+            .then((DocumentSnapshot documentSnapshot){
+         Map<String, dynamic> data = documentSnapshot.data();
+         aboutController.text = data['about'];
+        });
+
       });
     });
   }
+  Future<void> updateFirebase(aboutValController){
+    CollectionReference users = FirebaseFirestore.instance.collection('users');
 
-  Future<void> uploadImage() async {
-    CollectionReference users;
+
+      return users
+          .doc(userEmail)
+          .update({'about': aboutValController.text})
+          .then((value) => print("User Updated"))
+          .catchError((error) => print("Failed to update user: $error"));
+
   }
   @override
   void initState() {
@@ -74,34 +132,13 @@ class userHomeState extends State<userHome> {
   }
   @override
   Widget build(BuildContext context) {
-    // if(!isSignedIn()){
-    // return MaterialApp(
-    //   title: 'Flutter Demo',
-    //   theme: ThemeData(
-    //
-    //     // This is the theme of your application.
-    //     //
-    //     // Try running your application with "flutter run". You'll see the
-    //     // application has a blue toolbar. Then, without quitting the app, try
-    //     // changing the primarySwatch below to Colors.green and then invoke
-    //     // "hot reload" (press "r" in the console where you ran "flutter run",
-    //     // or simply save your changes to "hot reload" in a Flutter IDE).
-    //     // Notice that the counter didn't reset back to zero; the application
-    //     // is not restarted.
-    //     primarySwatch: Colors.blue,
-    //   ),
-    //
-    //   home: MyHomePage(),
-    //   builder: EasyLoading.init(),
-    //   routes: <String, WidgetBuilder>{
-    //     '/signup': (BuildContext context) => SignupPage(),
-    //     '/login' : (BuildContext context) => MyHomePage(),
-    //     // '/userHome' : (BuildContext context) => UserHomePage(),
-    //
-    //   },
-    // );
-
-    //}
+    CollectionReference users = FirebaseFirestore.instance.collection('users');
+    FirebaseAuth.instance.authStateChanges().listen((User user) {
+      if (user == null) {
+        //print('User is currently signed out!');
+        Navigator.pop(context);
+      }
+    });
 
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
@@ -133,7 +170,7 @@ class userHomeState extends State<userHome> {
               title: Text('Logout'),
               onTap: () {
                 signOut();
-                Navigator.pushReplacementNamed(context, "/");
+                //Navigator.pushReplacementNamed(context, "/");//should be changed to pop
 
                 // Update the state of the app.
                 // ...
@@ -199,18 +236,94 @@ class userHomeState extends State<userHome> {
                   // flex:1,
                   child: Container(padding: EdgeInsets.all(15)))
             ]),
-            Container(
-              child:
-            TextField(
-              keyboardType: TextInputType.multiline,
-              maxLines: null,
-              inputFormatters:[
-                LengthLimitingTextInputFormatter(150),
-              ]
-             // "Create account to begin exploring and creating",
+            FutureBuilder<DocumentSnapshot>(
+              future: users.doc(userEmail).get(),
+              builder:
+              (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot){
+                if(snapshot.connectionState == ConnectionState.done){
+                  Map<String, dynamic> data = snapshot.data.data();
+
+                  return Focus(
+                      child: TextField(
+
+                        onTap: (){
+                          FocusScopeNode currentFocus = FocusScope.of(context);
+                          if(!currentFocus.hasPrimaryFocus){
+                            currentFocus.unfocus();
+                          }
+                        },
+
+                        //autofocus: true,
+                        controller: aboutController,
+                        maxLength: 150,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 3,
+                        expands: false,
+                        decoration: InputDecoration(
+                          //border: InputBorder.none,
+                          counter:Offstage(),
+                        ),
+                      ),
+                      onFocusChange: (hasFocus){
+                        if(!hasFocus){
+                          updateFirebase(aboutController);
+                        }
+                      }
+                  );
+                  return Text("${data['about']}");
+                }
+                return Text("loading");
+              }
             ),
-            ),
-            _image == null ? Text('No image selected') : Image.file(_image),
+            //I'm trying to get about doc reference of individual user so i can update the about attribute
+            // StreamBuilder<DocumentSnapshot>(
+            //   stream: firestore
+            //       .collection('users')
+            //       .doc(userEmail)
+            //       .snapshots(),
+            // ),
+            SingleChildScrollView(
+              child: Column(
+                children: [
+
+                      //_image == null ? Text('No posts') : Image.file(_image),
+                    _image==null?Text('no posts') : Text('$_image'),
+
+
+
+                ]
+              )
+                // TextField(
+                //
+                //   onTap: (){
+                //     FocusScopeNode currentFocus = FocusScope.of(context);
+                //     if(!currentFocus.hasPrimaryFocus){
+                //       currentFocus.unfocus();
+                //     }
+                //   },
+                //   autofocus: true,
+                //   controller: aboutController,
+                //   maxLength: 150,
+                //   keyboardType: TextInputType.multiline,
+                //   maxLines: null,
+                //   onChanged:(value) {
+                //     setState(() {
+                //       aboutText = value;
+                //       updateFirebase(value);
+                //     });
+                //   },
+                //
+                //   decoration: InputDecoration(
+                //     //border: InputBorder.none,
+                //     counter:Offstage(),
+                // ),
+                //   )
+                  ),
+
+
+
+
           ],
         ),
       ),
