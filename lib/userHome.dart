@@ -8,11 +8,12 @@ import 'myforms.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';// as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart'; // as firebase_storage;
 import 'package:flutter/services.dart';
 import 'main.dart';
 import 'signup.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
 
 class userHome extends StatefulWidget {
   userHome({Key key}) : super(key: key);
@@ -22,8 +23,7 @@ class userHome extends StatefulWidget {
 
 class userHomeState extends State<userHome> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
- FirebaseStorage storage =
-    FirebaseStorage.instance;
+  FirebaseStorage storage = FirebaseStorage.instance;
   String userEmail;
   String username;
   final picker = ImagePicker();
@@ -31,45 +31,112 @@ class userHomeState extends State<userHome> {
   String aboutText;
   File _image;
   int num = 0;
+  ListResult photoList;
+  ValueKey<String> keys;
+  Position pos;
+  Future<Position> _determinePosition() async{
+    bool serviceEnabled;
+    LocationPermission permission;
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
 
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
 
-
+    return await Geolocator.getCurrentPosition();
+  }
   Future getImage() async {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
+    CollectionReference userPhotos = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userEmail)
+        .collection('photos');
 
-    CollectionReference userPhotos = FirebaseFirestore.instance.collection('users').doc(userEmail).collection('photos');
-    setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path);
-        print('$_image');
-        String fileName = basename(_image.path);
-        print('$fileName');
+    if (pickedFile != null) {
+      _image = File(pickedFile.path);
+      await uploadImageToFirebase();
+      photoList =
+          await FirebaseStorage.instance.ref().child(userEmail).listAll();
+
+      String fileName = basename(_image.path);
+      print('$userEmail');
+      print('$fileName');
+      String path;
+
+      print('$path');
+      String downloadURL =
+          await storage.ref().child(userEmail).child(fileName).getDownloadURL();
+          await _determinePosition().then((value) =>
+          setState((){
+            pos = value;
+          }));
+
         userPhotos.add({
-          'content' : "content",
+          'url': downloadURL,
+          'date': Timestamp.now(),
           'description': "photo description",
-          'location' : 'photo location'
+          'location': '$pos'
         });
 
-      } else {
-        print('No image selected.');
-      }
-    });
-    await uploadImageToFirebase();
+
+    } else {
+      print('No image selected.');
+    }
   }
-  Future <void> uploadImageToFirebase() async{
+
+  Future<void> uploadImageToFirebase() async {
     String filename = basename(_image.path);
     Reference ref = storage.ref().child(userEmail).child(filename);
     UploadTask uploadTask = ref.putFile(_image);
-    uploadTask.then((res){
+    uploadTask.then((res) {
       res.ref.getDownloadURL();
     });
+    try {
+      await uploadTask;
+      print('Upload complete.');
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        print('User does not have permission to upload to this reference.');
+      }
 
+      //await listExample();
+
+    }
   }
 
-  void signOut() async {
-    await FirebaseAuth.instance.signOut();
+  Future<void> listExample() async {
+    photoList = await FirebaseStorage.instance.ref().child(userEmail).listAll();
+
+    photoList.items.forEach((Reference ref) {
+      Image.network('$ref');
+    });
+
+    photoList.prefixes.forEach((ref) {
+      print('Found directory: $ref');
+    });
+  }
+
+  void signOut(context) {
+    FirebaseAuth.instance.signOut();
+    FirebaseAuth.instance.authStateChanges().listen((User user) {
+      if (user == null) {
+        Navigator.popUntil(context, ModalRoute.withName('/'));
+      }
+    });
     //Navigator.pop(context);
   }
+
   // Future<void> uploadExample() async {
   //   Directory appDocDir = await getApplicationDocumentsDirectory();
   //   String filePath = '${appDocDir.absolute}/file-to-upload.png';
@@ -86,7 +153,7 @@ class userHomeState extends State<userHome> {
   //     // e.g, e.code == 'canceled'
   //   }
   // }
-  bool isSignedIn() {
+  Future<bool> isSignedIn() async {
     FirebaseAuth.instance.authStateChanges().listen((User user) {
       if (user == null) {
         //print('User is currently signed out!');
@@ -97,48 +164,52 @@ class userHomeState extends State<userHome> {
   }
 
   Future<void> userName() async {
-
     FirebaseAuth.instance.authStateChanges().listen((User user) {
+      if (user == null) {
+        //Navigator.popUntil(context,ModalRoute.withName('/') );
+      }
       setState(() {
         userEmail = user.email;
         username = userEmail.split('@')[0];
-      FirebaseFirestore.instance.collection('users').doc(userEmail)
-            .get()
-            .then((DocumentSnapshot documentSnapshot){
-         Map<String, dynamic> data = documentSnapshot.data();
-         aboutController.text = data['about'];
-        });
+      });
 
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userEmail)
+          .get()
+          .then((DocumentSnapshot documentSnapshot) {
+        Map<String, dynamic> data = documentSnapshot.data();
+        aboutController.text = data['about'];
       });
     });
   }
-  Future<void> updateFirebase(aboutValController){
+
+  Future<void> updateFirebase(aboutValController) {
     CollectionReference users = FirebaseFirestore.instance.collection('users');
 
-
-      return users
-          .doc(userEmail)
-          .update({'about': aboutValController.text})
-          .then((value) => print("User Updated"))
-          .catchError((error) => print("Failed to update user: $error"));
-
+    return users
+        .doc(userEmail)
+        .update({'about': aboutValController.text})
+        .then((value) => print("User Updated"))
+        .catchError((error) => print("Failed to update user: $error"));
   }
+
   @override
   void initState() {
-   setState((){
-     userName();
-   });
+    userName();
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
+    // userName();
+    //userName(context);
+    // FirebaseAuth.instance.authStateChanges().listen((User user){
+    //   if(user == null){
+    //     Navigator.popUntil(context, ModalRoute.withName('/') );
+    //   }
+    //   });
     CollectionReference users = FirebaseFirestore.instance.collection('users');
-    FirebaseAuth.instance.authStateChanges().listen((User user) {
-      if (user == null) {
-        //print('User is currently signed out!');
-        Navigator.pop(context);
-      }
-    });
 
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
@@ -169,7 +240,7 @@ class userHomeState extends State<userHome> {
             ListTile(
               title: Text('Logout'),
               onTap: () {
-                signOut();
+                signOut(context);
                 //Navigator.pushReplacementNamed(context, "/");//should be changed to pop
 
                 // Update the state of the app.
@@ -206,16 +277,18 @@ class userHomeState extends State<userHome> {
           // horizontal).
           //mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    child: CircleAvatar(
-                  backgroundColor: Colors.brown.shade800,
-                  radius: 50,
-                  child: Text('AH'),
-                ),
+            Flexible(
+              flex: 1,
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.brown.shade800,
+                    radius: 50,
+                    child: Text('AH'),
                   ),
+                ),
                 Expanded(
                   child: RichText(
                     text: TextSpan(
@@ -231,99 +304,104 @@ class userHomeState extends State<userHome> {
                         ]),
                   ),
                 ),
-
-              Expanded(
-                  // flex:1,
-                  child: Container(padding: EdgeInsets.all(15)))
-            ]),
-            FutureBuilder<DocumentSnapshot>(
-              future: users.doc(userEmail).get(),
-              builder:
-              (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot){
-                if(snapshot.connectionState == ConnectionState.done){
-                  Map<String, dynamic> data = snapshot.data.data();
-
-                  return Focus(
-                      child: TextField(
-
-                        onTap: (){
-                          FocusScopeNode currentFocus = FocusScope.of(context);
-                          if(!currentFocus.hasPrimaryFocus){
-                            currentFocus.unfocus();
-                          }
-                        },
-
-                        //autofocus: true,
-                        controller: aboutController,
-                        maxLength: 150,
-                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 3,
-                        expands: false,
-                        decoration: InputDecoration(
-                          //border: InputBorder.none,
-                          counter:Offstage(),
-                        ),
-                      ),
-                      onFocusChange: (hasFocus){
-                        if(!hasFocus){
-                          updateFirebase(aboutController);
-                        }
-                      }
-                  );
-                  return Text("${data['about']}");
-                }
-                return Text("loading");
-              }
+                Expanded(
+                    // flex:1,
+                    child: Container(padding: EdgeInsets.all(15)))
+              ]),
             ),
-            //I'm trying to get about doc reference of individual user so i can update the about attribute
-            // StreamBuilder<DocumentSnapshot>(
-            //   stream: firestore
-            //       .collection('users')
-            //       .doc(userEmail)
-            //       .snapshots(),
-            // ),
-            SingleChildScrollView(
-              child: Column(
-                children: [
+            Flexible(
+                flex: 10,
+                child: Column(children: <Widget>[
+                  Flexible(
+                    flex: 2,
+                    child: FutureBuilder<DocumentSnapshot>(
+                        future: users.doc(userEmail).get(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<DocumentSnapshot> snapshot) {
+                          if (snapshot.hasError) {
+                            print(snapshot.error);
+                            return Text("Error");
+                          } else if (snapshot.connectionState ==
+                              ConnectionState.done) {
+                            Map<String, dynamic> data = snapshot.data.data();
 
-                      //_image == null ? Text('No posts') : Image.file(_image),
-                    _image==null?Text('no posts') : Text('$_image'),
+                            return Focus(
+                                child: TextField(
+                                  onTap: () {
+                                    FocusScopeNode currentFocus =
+                                        FocusScope.of(context);
+                                    if (!currentFocus.hasPrimaryFocus) {
+                                      currentFocus.unfocus();
+                                    }
+                                  },
 
-
-
-                ]
-              )
-                // TextField(
-                //
-                //   onTap: (){
-                //     FocusScopeNode currentFocus = FocusScope.of(context);
-                //     if(!currentFocus.hasPrimaryFocus){
-                //       currentFocus.unfocus();
-                //     }
-                //   },
-                //   autofocus: true,
-                //   controller: aboutController,
-                //   maxLength: 150,
-                //   keyboardType: TextInputType.multiline,
-                //   maxLines: null,
-                //   onChanged:(value) {
-                //     setState(() {
-                //       aboutText = value;
-                //       updateFirebase(value);
-                //     });
-                //   },
-                //
-                //   decoration: InputDecoration(
-                //     //border: InputBorder.none,
-                //     counter:Offstage(),
-                // ),
-                //   )
+                                  //autofocus: true,
+                                  controller: aboutController,
+                                  maxLength: 150,
+                                  maxLengthEnforcement:
+                                      MaxLengthEnforcement.enforced,
+                                  keyboardType: TextInputType.multiline,
+                                  maxLines: 3,
+                                  expands: false,
+                                  decoration: InputDecoration(
+                                    //border: InputBorder.none,
+                                    counter: Offstage(),
+                                  ),
+                                ),
+                                onFocusChange: (hasFocus) {
+                                  if (!hasFocus) {
+                                    updateFirebase(aboutController);
+                                  }
+                                });
+                            return Text("${data['about']}");
+                          } else {
+                            print(snapshot);
+                            return Text("loading");
+                          }
+                        }),
                   ),
+                  Flexible(
+                      flex: 10,
+                      child: StreamBuilder<QuerySnapshot>(
+                          stream: users
+                              .doc(userEmail)
+                              .collection('photos')
+                              .orderBy('date', descending: true)
+                              .snapshots(),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if (snapshot.hasError) {
+                              return Text('error');
+                            }
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Text("loading");
+                            }
+                            return ListView(
 
+                                children: snapshot.data.docs
+                                    .map((DocumentSnapshot document) {
 
-
-
+                                  return Dismissible(
+                                    onDismissed:(direction){
+                                      users.doc(userEmail).collection('photos').doc(document.id).delete();
+                                    },
+                                      key: ValueKey<String>(document.id),
+                                      child: Card(
+                                          shape: Border.all(width: 5),
+                                          elevation: 20,
+                                          child: Column(children: <Widget>[
+                                            Container(
+                                                child: Image.network(
+                                                    document.data()['url'])),
+                                          ]))
+                                  );
+                                }).toList());
+                          }))
+                  //_image == null ? Text('No posts') : Image.file(_image),
+                  //_image == null ? Text('no posts') :
+                  //Text('$photoList'),
+                ]))
           ],
         ),
       ),

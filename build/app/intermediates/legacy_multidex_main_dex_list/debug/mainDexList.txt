@@ -131,6 +131,7 @@ com/google/android/gms/common/zzl.class
 com/google/android/gms/internal/measurement/zzb.class
 com/google/android/gms/internal/measurement/zzo.class
 com/google/android/gms/internal/measurement/zzp.class
+com/google/android/gms/location/ActivityTransition$SupportedActivityTransition.class
 com/google/android/gms/measurement/internal/AppMeasurementDynamiteService.class
 com/google/android/gms/measurement/internal/zzae.class
 com/google/android/gms/measurement/internal/zze.class

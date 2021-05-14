@@ -89,11 +89,11 @@ class SignUpFormState extends State<SignUpForm> {
         'about' : "Default about"
       });
       //create folder to hold images
-      await FirebaseFirestore.instance.collection('users').doc(controller1).collection('photos').doc("photo template").set({
-        'description': 'default description',
-        'location' : 'currently unnasigned location',
-        'content' : 'imageFile'
-      });
+      // await FirebaseFirestore.instance.collection('users').doc(controller1).collection('photos').doc("photo template").set({
+      //   'description': 'default description',
+      //   'location' : 'currently unnasigned location',
+      //   'content' : 'imageFile'
+      // });
 
 
 
@@ -147,7 +147,7 @@ class SignUpFormState extends State<SignUpForm> {
             onPressed: () async {
               await register(_emailcontroller.text, _passwordcontroller.text);
               if(successfulReg){
-                Navigator.pop(context);
+                Navigator.popUntil(context, ModalRoute.withName('/'));
               }
               // Validate returns true if the form is valid, or false otherwise.
             },
