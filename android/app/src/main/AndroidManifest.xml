@@ -1,10 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.my_project">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <application
         android:label="my_project"
         android:icon="@mipmap/ic_launcher">
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
@@ -39,5 +41,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data android:name="com.google.android.maps.v2.API_KEY" android:value="AIzaSyAqwofE3NS7KGoCDZw9aMwzYJ2HJB-QHT0"/>
+        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
+        <meta-data android:name="com.google.android.geo.AIzaSyAqwofE3NS7KGoCDZw9aMwzYJ2HJB-QHT0"
+            android:value="AIzaSyAqwofE3NS7KGoCDZw9aMwzYJ2HJB-QHT0"/>
+        <activity android:name="com.apptreesoftware.mapview.MapActivity" />
     </application>
 </manifest>

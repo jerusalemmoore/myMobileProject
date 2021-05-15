@@ -164,6 +164,12 @@
       "languageVersion": "2.1"
     },
     {
+      "name": "flutter_speed_dial",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_speed_dial-1.2.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.2"
+    },
+    {
       "name": "flutter_spinkit",
       "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/flutter_spinkit-5.0.0",
       "packageUri": "lib/",
@@ -200,6 +206,18 @@
       "languageVersion": "2.10"
     },
     {
+      "name": "google_maps_flutter",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/google_maps_flutter-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "google_maps_flutter_platform_interface",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/google_maps_flutter_platform_interface-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.3"
+    },
+    {
       "name": "http",
       "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/http-0.12.2",
       "packageUri": "lib/",
@@ -234,6 +252,24 @@
       "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/js-0.6.3",
       "packageUri": "lib/",
       "languageVersion": "2.12"
+    },
+    {
+      "name": "location",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/location-3.2.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
+    },
+    {
+      "name": "location_platform_interface",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/location_platform_interface-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.4"
+    },
+    {
+      "name": "location_web",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/location_web-1.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.1"
     },
     {
       "name": "matcher",
@@ -338,6 +374,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "stream_transform",
+      "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/stream_transform-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.6"
+    },
+    {
       "name": "string_scanner",
       "rootUri": "file:///home/jerusalem/snap/flutter/common/flutter/.pub-cache/hosted/pub.dartlang.org/string_scanner-1.1.0",
       "packageUri": "lib/",
@@ -386,7 +428,7 @@
       "languageVersion": "2.7"
     }
   ],
-  "generated": "2021-05-14T05:12:08.861730Z",
+  "generated": "2021-05-15T05:48:16.257984Z",
   "generator": "pub",
   "generatorVersion": "2.12.2"
 }

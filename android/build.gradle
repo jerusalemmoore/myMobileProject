@@ -11,7 +11,9 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
-
+plugins {
+    id 'com.google.secrets_gradle_plugin' version '0.6'
+}
 allprojects {
     repositories {
         google()

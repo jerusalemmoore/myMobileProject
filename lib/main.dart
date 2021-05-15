@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'userHome.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'myforms.dart';
+import 'map.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'signup.dart';

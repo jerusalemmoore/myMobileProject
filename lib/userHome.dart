@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
 import 'myforms.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -12,6 +14,7 @@ import 'package:firebase_storage/firebase_storage.dart'; // as firebase_storage;
 import 'package:flutter/services.dart';
 import 'main.dart';
 import 'signup.dart';
+import 'map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -26,6 +29,7 @@ class userHomeState extends State<userHome> {
   FirebaseStorage storage = FirebaseStorage.instance;
   String userEmail;
   String username;
+  int _selectedIndex = 0;
   final picker = ImagePicker();
   final aboutController = TextEditingController();
   String aboutText;
@@ -34,7 +38,7 @@ class userHomeState extends State<userHome> {
   ListResult photoList;
   ValueKey<String> keys;
   Position pos;
-  Future<Position> _determinePosition() async{
+  Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -49,13 +53,13 @@ class userHomeState extends State<userHome> {
       }
     }
     if (permission == LocationPermission.deniedForever) {
-
       return Future.error(
           'Location permissions are permanently denied, we cannot request permissions.');
     }
 
     return await Geolocator.getCurrentPosition();
   }
+
   Future getImage() async {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
     CollectionReference userPhotos = FirebaseFirestore.instance
@@ -77,19 +81,16 @@ class userHomeState extends State<userHome> {
       print('$path');
       String downloadURL =
           await storage.ref().child(userEmail).child(fileName).getDownloadURL();
-          await _determinePosition().then((value) =>
-          setState((){
+      await _determinePosition().then((value) => setState(() {
             pos = value;
           }));
 
-        userPhotos.add({
-          'url': downloadURL,
-          'date': Timestamp.now(),
-          'description': "photo description",
-          'location': '$pos'
-        });
-
-
+      userPhotos.add({
+        'url': downloadURL,
+        'date': Timestamp.now(),
+        'description': "photo description",
+        'location': '$pos'
+      });
     } else {
       print('No image selected.');
     }
@@ -378,25 +379,26 @@ class userHomeState extends State<userHome> {
                               return Text("loading");
                             }
                             return ListView(
-
                                 children: snapshot.data.docs
                                     .map((DocumentSnapshot document) {
-
-                                  return Dismissible(
-                                    onDismissed:(direction){
-                                      users.doc(userEmail).collection('photos').doc(document.id).delete();
-                                    },
-                                      key: ValueKey<String>(document.id),
-                                      child: Card(
-                                          shape: Border.all(width: 5),
-                                          elevation: 20,
-                                          child: Column(children: <Widget>[
-                                            Container(
-                                                child: Image.network(
-                                                    document.data()['url'])),
-                                          ]))
-                                  );
-                                }).toList());
+                              return Dismissible(
+                                  onDismissed: (direction) {
+                                    users
+                                        .doc(userEmail)
+                                        .collection('photos')
+                                        .doc(document.id)
+                                        .delete();
+                                  },
+                                  key: ValueKey<String>(document.id),
+                                  child: Card(
+                                      shape: Border.all(width: 5),
+                                      elevation: 20,
+                                      child: Column(children: <Widget>[
+                                        Container(
+                                            child: Image.network(
+                                                document.data()['url'])),
+                                      ])));
+                            }).toList());
                           }))
                   //_image == null ? Text('No posts') : Image.file(_image),
                   //_image == null ? Text('no posts') :
@@ -406,11 +408,66 @@ class userHomeState extends State<userHome> {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: getImage,
-        tooltip: 'Pick Image',
-        child: Icon(Icons.add_a_photo),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: SpeedDial(
+        marginBottom: 20,
+        // animatedIcon: AnimatedIcons.menu_close,
+        // animatedIconTheme: IconThemeData(size: 22.0),
+        /// This is ignored if animatedIcon is non null
+
+        // iconTheme: IconThemeData(color: Colors.grey[50], size: 30),
+        /// The label of the main button.
+        // label: Text("Open Speed Dial"),
+        /// The active label of the main button, Defaults to label if not specified.
+        // activeLabel: Text("Close Speed Dial"),
+        /// Transition Builder between label and activeLabel, defaults to FadeTransition.
+        // labelTransitionBuilder: (widget, animation) => ScaleTransition(scale: animation,child: widget),
+        /// The below button size defaults to 56 itself, its the FAB size + It also affects relative padding and other elements
+
+        visible: true,
+        /// If true user is forced to close dial manually
+        /// by tapping main button and overlay is not rendered.
+        closeManually: false,
+        /// If true overlay will render no matter what.
+
+        curve: Curves.bounceIn,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.5,
+        onOpen: () => print('OPENING DIAL'),
+        onClose: () => print('DIAL CLOSED'),
+        tooltip: 'Speed Dial',
+        heroTag: 'speed-dial-hero-tag',
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        elevation: 8.0,
+        child: Icon(Icons.add),
+        shape: CircleBorder(),
+        // orientation: SpeedDialOrientation.Up,
+        // childMarginBottom: 2,
+        // childMarginTop: 2,
+        children: [
+          SpeedDialChild(
+            child: Icon(Icons.image),
+            backgroundColor: Colors.blue,
+            label: 'Upload Image',
+            labelStyle: TextStyle(fontSize: 18.0),
+            onTap: getImage,
+
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.map),
+            backgroundColor: Colors.blue,
+            label: 'Map',
+            labelStyle: TextStyle(fontSize: 18.0),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) =>MapSample()),
+    )),
+
+
+
+        ],
+      ),
     );
+
+      // This trailing comma makes auto-formatting nicer for build methods.
+
   }
 }
