@@ -1,25 +1,13 @@
 import 'package:flutter/material.dart';
 import 'myforms.dart';
 
-class SignupPage extends StatefulWidget{
+class SignupPage extends StatefulWidget {
   SignupPage({Key key}) : super(key: key);
   @override
   _SignupPageState createState() => _SignupPageState();
 }
+
 class _SignupPageState extends State<SignupPage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -56,31 +44,24 @@ class _SignupPageState extends State<SignupPage> {
           children: <Widget>[
             RichText(
               text: TextSpan(
-                //style:DefaultTextStyle.of(context).style ,
+                  //style:DefaultTextStyle.of(context).style ,
                   children: [
                     TextSpan(
                       text: 'Registration',
-                      style: TextStyle(color: Colors.black,
+                      style: TextStyle(
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
                           fontSize: 50),
                     ),
-                  ]
-              ),
+                  ]),
             ),
             Text(
-              "Create account to begin exploring and creating",
+              "Please enter valid email/password",
             ),
             SignUpForm(),
-
           ],
-
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

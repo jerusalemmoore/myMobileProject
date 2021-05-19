@@ -1,19 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-
-import 'myforms.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart'; // as firebase_storage;
 import 'package:flutter/services.dart';
-import 'main.dart';
-import 'signup.dart';
 import 'map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -29,12 +23,12 @@ class userHomeState extends State<userHome> {
   FirebaseStorage storage = FirebaseStorage.instance;
   String userEmail;
   String username;
-  int _selectedIndex = 0;
   final picker = ImagePicker();
   final aboutController = TextEditingController();
   String aboutText;
   File _image;
   int num = 0;
+  int items;
   ListResult photoList;
   ValueKey<String> keys;
   Position pos;
@@ -74,11 +68,11 @@ class userHomeState extends State<userHome> {
           await FirebaseStorage.instance.ref().child(userEmail).listAll();
 
       String fileName = basename(_image.path);
-      print('$userEmail');
-      print('$fileName');
+      // print('$userEmail');
+      // print('$fileName');
       String path;
 
-      print('$path');
+      // print('$path');
       String downloadURL =
           await storage.ref().child(userEmail).child(fileName).getDownloadURL();
       await _determinePosition().then((value) => setState(() {
@@ -165,10 +159,14 @@ class userHomeState extends State<userHome> {
   }
 
   Future<void> userName() async {
+    // CollectionReference users = FirebaseFirestore.instance.collection('users');
+    //
+    // items = await users.doc(userEmail).collection('photos').snapshots().length;
     FirebaseAuth.instance.authStateChanges().listen((User user) {
       if (user == null) {
         //Navigator.popUntil(context,ModalRoute.withName('/') );
       }
+
       setState(() {
         userEmail = user.email;
         username = userEmail.split('@')[0];
@@ -324,8 +322,6 @@ class userHomeState extends State<userHome> {
                             return Text("Error");
                           } else if (snapshot.connectionState ==
                               ConnectionState.done) {
-                            Map<String, dynamic> data = snapshot.data.data();
-
                             return Focus(
                                 child: TextField(
                                   onTap: () {
@@ -335,8 +331,6 @@ class userHomeState extends State<userHome> {
                                       currentFocus.unfocus();
                                     }
                                   },
-
-                                  //autofocus: true,
                                   controller: aboutController,
                                   maxLength: 150,
                                   maxLengthEnforcement:
@@ -354,9 +348,8 @@ class userHomeState extends State<userHome> {
                                     updateFirebase(aboutController);
                                   }
                                 });
-                            return Text("${data['about']}");
                           } else {
-                            print(snapshot);
+                            //print(snapshot);
                             return Text("loading");
                           }
                         }),
@@ -373,32 +366,52 @@ class userHomeState extends State<userHome> {
                               AsyncSnapshot<QuerySnapshot> snapshot) {
                             if (snapshot.hasError) {
                               return Text('error');
-                            }
-                            if (snapshot.connectionState ==
+                            } else if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return Text("loading");
+                            } else if (snapshot.hasData) {
+                              print(items);
+                              return ListView(
+                                  children: snapshot.data.docs
+                                      .map((DocumentSnapshot document) {
+                                        Timestamp t = document.data()['date'] ;
+                                        DateTime d = t.toDate();
+                                return Dismissible(
+                                    onDismissed: (direction) {
+                                      users
+                                          .doc(userEmail)
+                                          .collection('photos')
+                                          .doc(document.id)
+                                          .delete();
+                                    },
+                                    key: ValueKey<String>(document.id),
+                                    child: Card(
+                                        shape: Border.all(width: 5),
+                                        elevation: 20,
+                                        child: Column(children: <Widget>[
+
+                                          Container(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Text(
+                                                document.data()['description'],
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Text(
+                                                d.toString(),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          Container(
+                                              child: Image.network(
+                                                  document.data()['url'])),
+                                        ])));
+                              }).toList());
                             }
-                            return ListView(
-                                children: snapshot.data.docs
-                                    .map((DocumentSnapshot document) {
-                              return Dismissible(
-                                  onDismissed: (direction) {
-                                    users
-                                        .doc(userEmail)
-                                        .collection('photos')
-                                        .doc(document.id)
-                                        .delete();
-                                  },
-                                  key: ValueKey<String>(document.id),
-                                  child: Card(
-                                      shape: Border.all(width: 5),
-                                      elevation: 20,
-                                      child: Column(children: <Widget>[
-                                        Container(
-                                            child: Image.network(
-                                                document.data()['url'])),
-                                      ])));
-                            }).toList());
+                            print('hello');
+                            return Text('no posts');
                           }))
                   //_image == null ? Text('No posts') : Image.file(_image),
                   //_image == null ? Text('no posts') :
@@ -407,7 +420,6 @@ class userHomeState extends State<userHome> {
           ],
         ),
       ),
-
       floatingActionButton: SpeedDial(
         marginBottom: 20,
         // animatedIcon: AnimatedIcons.menu_close,
@@ -424,9 +436,11 @@ class userHomeState extends State<userHome> {
         /// The below button size defaults to 56 itself, its the FAB size + It also affects relative padding and other elements
 
         visible: true,
+
         /// If true user is forced to close dial manually
         /// by tapping main button and overlay is not rendered.
         closeManually: false,
+
         /// If true overlay will render no matter what.
 
         curve: Curves.bounceIn,
@@ -451,23 +465,20 @@ class userHomeState extends State<userHome> {
             label: 'Upload Image',
             labelStyle: TextStyle(fontSize: 18.0),
             onTap: getImage,
-
           ),
           SpeedDialChild(
-            child: Icon(Icons.map),
-            backgroundColor: Colors.blue,
-            label: 'Map',
-            labelStyle: TextStyle(fontSize: 18.0),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) =>MapSample()),
-    )),
-
-
-
+              child: Icon(Icons.map),
+              backgroundColor: Colors.blue,
+              label: 'Map',
+              labelStyle: TextStyle(fontSize: 18.0),
+              onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MapSample()),
+                  )),
         ],
       ),
     );
 
-      // This trailing comma makes auto-formatting nicer for build methods.
-
+    // This trailing comma makes auto-formatting nicer for build methods.
   }
 }

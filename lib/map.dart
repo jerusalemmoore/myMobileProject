@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:collection';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,22 +14,25 @@ class MapSample extends StatefulWidget {
 }
 
 class MapSampleState extends State<MapSample> {
-   Completer<GoogleMapController> _controller = Completer();
+  Completer<GoogleMapController> _controller = Completer();
   final Geolocator geolocator = Geolocator();
   //GoogleMapController _controller;
+  bool isBroadcasting;
   User currentUser = FirebaseAuth.instance.currentUser;
   Location location = Location();
-  //Future<Position> currentPos = geolocator.getCurrentPos
-
+  Position currentPos;
+  Set<Marker> _markers = HashSet<Marker>();
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   void getUser() {
-    if(currentUser == null){
+    if (currentUser == null) {
       Navigator.popUntil(context, ModalRoute.withName('/'));
-    }
-    else{
-      CollectionReference coll = firestore.collection('users').doc(currentUser.email).collection('photos');
-      Future<DocumentSnapshot> snap = coll.get().then((querySnapshot){
-        querySnapshot.docs.forEach((value){
+    } else {
+      CollectionReference coll = firestore
+          .collection('users')
+          .doc(currentUser.email)
+          .collection('photos');
+      coll.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((value) {
           print(value.data());
           return value.data();
         });
@@ -36,18 +41,37 @@ class MapSampleState extends State<MapSample> {
     }
   }
 
-  static final CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
-    zoom: 14.4746,
-  );
+  Future<void> _broadcastLocation() async {
+    CollectionReference markers = firestore.collection('markers');
+   // var myMarker = markers.doc(currentUser.email).get();
+    isBroadcasting = !isBroadcasting;
+    if (isBroadcasting) {
+       return markers.doc(currentUser.email).set({
+        'longitude': currentPos.longitude,
+        'latitude': currentPos.latitude,
+        'user': currentUser.email
+      });
+    } else {
 
-  static final CameraPosition _kLake = CameraPosition(
+      return markers.doc(currentUser.email).delete();
+    }
+  }
+  _checkIfBroadcasting() async{
+    DocumentSnapshot snap = await firestore.collection('markers').doc(currentUser.email).get();
+    this.setState((){
+      isBroadcasting = snap.exists;
+    });
+  }
+  @override
+  void initState() {
+    _determinePosition();
+    _checkIfBroadcasting();
+    _setMarkers();
 
-      bearing: 192.8334901395799,
-      target: LatLng(37.43296265331129, -122.08832357078792),
-      tilt: 59.440717697143555,
-      zoom: 19.151926040649414);
-  Future<Position> _determinePosition() async{
+    super.initState();
+  }
+
+  Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -62,67 +86,75 @@ class MapSampleState extends State<MapSample> {
       }
     }
     if (permission == LocationPermission.deniedForever) {
-
       return Future.error(
           'Location permissions are permanently denied, we cannot request permissions.');
     }
-
+    currentPos = await Geolocator.getCurrentPosition();
+    print('have position');
     return await Geolocator.getCurrentPosition();
   }
-  // void _onMapCreated(GoogleMapController _cntlr) async
-  // {
-  //   print("hello");
-  //   _controller = _cntlr;
-  //   location.onLocationChanged.listen((l) {
-  //     _controller.animateCamera(
-  //       CameraUpdate.newCameraPosition(
-  //         CameraPosition(target: LatLng(l.latitude, l.longitude),zoom: 100),
-  //       ),
-  //     );
-  //   });
-  //   // await _determinePosition().then((value) => setState(() {
-  //   //   pos = value;
-  //   // }));
-  // }
+  void _setMarkers() {
+    Stream collectionStream = firestore.collection('markers').snapshots();
+    firestore.collection('markers').get().then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        //
+        print(doc['user']);
+        print(doc['latitude']);
+        print(doc['longitude']);
+        setState(() {
+          _markers.add(Marker(
+              markerId: MarkerId(doc['user']),
+              position: LatLng(doc['latitude'], doc['longitude'])));
+        });
+      });
+    });
+  }
+
+  void signOut(context) {
+    FirebaseAuth.instance.signOut();
+    FirebaseAuth.instance.authStateChanges().listen((User user) {
+      if (user == null) {
+        Navigator.popUntil(context, ModalRoute.withName('/'));
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      body:
-      // FutureBuilder(
-      //   future: _determinePosition(),
-      //   builder:(context, AsyncSnapshot<Position> snapshot){
-      //     if(snapshot.connectionState == ConnectionState.done){
-        GoogleMap(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Live Venues'),
+      ),
+      body: FutureBuilder(
+          future: _determinePosition(),
+          builder: (context, AsyncSnapshot<Position> snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return GoogleMap(
                   mapType: MapType.normal,
-                  onMapCreated: (GoogleMapController controller){
+                  onMapCreated: (GoogleMapController controller) {
                     _controller.complete(controller);
                   },
                   myLocationEnabled: true,
+                  initialCameraPosition: CameraPosition(
+                      target:
+                          LatLng(snapshot.data.latitude, snapshot.data.longitude),
+                  zoom:100),
+                  // target:LatLng(0,0)),
+                  markers: _markers);
+            }
+            return Center(child: CircularProgressIndicator());
 
-                ),
-
-
-    //       if(snapshot.hasError){
-    //         return Text("Error");
-    //       }
-    //       return CircularProgressIndicator();
-    // }
-      // )GoogleMap(
-      //   mapType: MapType.normal,
-      //   initialCameraPosition: await _determinePosition,
-      //   onMapCreated: _onMapCreated
-     floatingActionButton: FloatingActionButton(
-        onPressed: _determinePosition,
-
-        //floatingActionButtonLocation:
-
+          }),
+      floatingActionButton: FloatingActionButton(
+        tooltip: "Tap this button to pin your location to the public, tap again to remove pin",
+        onPressed: _broadcastLocation,
         child: Icon(Icons.notifications_on_outlined),
       ),
+      bottomNavigationBar: BottomAppBar(
+        child: Container(height: 50.0),
+        color: Colors.blue,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
-
-//   Future<void> _goToTheLake() async {
-//     final GoogleMapController controller = await _controller.future;
-//     controller.animateCamera(CameraUpdate.newCameraPosition(_kLake));
-//   }
- }
+}
